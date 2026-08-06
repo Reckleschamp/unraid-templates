@@ -14,10 +14,9 @@
   <Project>https://github.com/Reckleschamp/unraid-templates</Project>
 
   <Overview>
-    ARK: Survival Ascended dedicated server with multi-map cluster support.
+    ARK: Survival Ascended dedicated server.
 
     IMPORTANT PORT SETUP:
-
     Before applying this template, click:
 
     "Add another Path, Port, Variable, Label or Device"
@@ -60,10 +59,6 @@
 
     Multiple map containers can share one cluster directory by using the same
     Cluster ID and Shared Cluster Directory host path.
-
-    Master INI files are stored under /data/config and copied into ASA's
-    WindowsServer configuration directory each time the container starts.
-    Missing INI files are generated automatically during the first startup.
   </Overview>
 
   <Category>GameServers:</Category>
@@ -117,7 +112,7 @@
     Target="MAP_NAME"
     Default="TheIsland_WP"
     Mode=""
-    Description="ASA map launch name. The requested map must be included in the installed ASA server version. Example: TheIsland_WP."
+    Description="ASA map launch name. Example: TheIsland_WP	Astraeos_WP CrystalIsles_WP Genesis_WP Ragnarok_WP ScorchedEarth_WP TheCenter_WP Valguero_WP Extinction_WP Aberration_WP"
     Type="Variable"
     Display="always"
     Required="true"
@@ -274,7 +269,7 @@
   <Config
     Name="Debug Log Maximum Size"
     Target="DEBUG_LOG_MAX_MB"
-    Default="100"
+    Default="10"
     Mode=""
     Description="Maximum size in MB for each generated container or Proton debug log. Older content is removed while retaining the newest diagnostic information."
     Type="Variable"
