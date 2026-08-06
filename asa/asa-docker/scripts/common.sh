@@ -26,17 +26,23 @@ is_true() {
 
 require_file() {
     local path="$1"
-    [[ -f "${path}" ]] || fatal "Required file not found: ${path}"
+
+    [[ -f "${path}" ]] ||
+        fatal "Required file not found: ${path}"
 }
 
 require_executable() {
     local path="$1"
-    [[ -x "${path}" ]] || fatal "Required executable not found: ${path}"
+
+    [[ -x "${path}" ]] ||
+        fatal "Required executable not found: ${path}"
 }
 
 require_writable_directory() {
     local path="$1"
+
     mkdir -p "${path}"
+
     [[ -w "${path}" ]] ||
         fatal "${path} is not writable by UID:GID $(id -u):$(id -g)."
 }
