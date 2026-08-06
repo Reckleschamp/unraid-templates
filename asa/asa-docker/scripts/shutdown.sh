@@ -32,7 +32,9 @@ shutdown_server() {
 
     if [[ -z "${SERVER_PID:-}" ]] ||
         ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+
         log "ASA is not currently running."
+        stop_asa_log_stream
         return
     fi
 
@@ -40,14 +42,16 @@ shutdown_server() {
         log "RCON connection established."
 
         log "Requesting world save."
-        send_rcon_command "SaveWorld" || \
+
+        send_rcon_command "SaveWorld" ||
             warn "The RCON SaveWorld command failed."
 
         log "Waiting ${SAVE_WAIT_SECONDS} seconds for the save to complete."
         sleep "${SAVE_WAIT_SECONDS}"
 
         log "Requesting graceful ASA shutdown."
-        send_rcon_command "DoExit" || \
+
+        send_rcon_command "DoExit" ||
             warn "The RCON DoExit command failed."
 
         if wait_for_server_exit "${STOP_TIMEOUT}"; then
@@ -61,6 +65,7 @@ shutdown_server() {
     fi
 
     log "Sending SIGTERM to Proton process ${SERVER_PID}."
+
     kill -TERM "${SERVER_PID}" 2>/dev/null || true
 
     if wait_for_server_exit 30; then
@@ -72,6 +77,9 @@ shutdown_server() {
     warn "Sending SIGKILL to Proton process ${SERVER_PID}."
 
     kill -KILL "${SERVER_PID}" 2>/dev/null || true
+
+    wait_for_server_exit 5 || true
+    stop_asa_log_stream
 
     log "ASA shutdown sequence completed."
 }
