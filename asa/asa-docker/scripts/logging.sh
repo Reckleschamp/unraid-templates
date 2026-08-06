@@ -23,7 +23,7 @@ write_debug_system_info() {
         printf 'Cluster ID: %s\n' "${CLUSTER_ID}"
         printf 'Data directory: %s\n' "${DATA_DIR}"
         printf 'Server directory: %s\n' "${ASA_DIR}"
-        printf 'Config directory: %s\n' "${CONFIG_DIR}"
+        printf 'Native ASA config directory: %s\n' "${ASA_CONFIG_DIR}"
         printf 'Cluster directory: %s\n' "${CLUSTER_DIR}"
         printf 'Proton directory: %s\n' "${PROTON_DIR}"
         printf 'Proton prefix: %s\n' "${PROTON_PREFIX}"
@@ -54,8 +54,6 @@ trim_debug_log() {
     warn "Debug log reached its ${DEBUG_LOG_MAX_MB} MB limit: ${log_file}"
 
     if tail -c "${max_bytes}" "${log_file}" >"${temporary_file}" 2>/dev/null; then
-        # Rewrite the existing file so a process holding it open can continue
-        # appending to the same file.
         cat "${temporary_file}" >"${log_file}"
         rm -f "${temporary_file}"
     fi
@@ -91,8 +89,6 @@ initialize_debug_logging() {
         "${DEBUG_PROTON_DIR}" \
         "${DEBUG_ASA_DIR}"
 
-    # Preserve the current startup log on each restart instead of allowing one
-    # container.log file to grow forever.
     if [[ -s "${DEBUG_CONTAINER_LOG}" ]]; then
         mv \
             "${DEBUG_CONTAINER_LOG}" \
@@ -100,14 +96,10 @@ initialize_debug_logging() {
             2>/dev/null || true
     fi
 
-    # Continue displaying output in Unraid while also storing it persistently.
     exec > >(tee -a "${DEBUG_CONTAINER_LOG}") 2>&1
 
     export PROTON_LOG=1
     export PROTON_LOG_DIR="${DEBUG_PROTON_DIR}"
-
-    # Target crash handling and DLL-loading failures without enabling Wine's
-    # extremely noisy warn+all diagnostics.
     export WINEDEBUG="-all,+seh,+loaddll"
 
     write_debug_system_info
@@ -168,8 +160,6 @@ write_launch_information() {
         printf 'BattlEye enabled: %s\n' "${BATTLEYE}"
         printf 'Extra server arguments: %s\n' "${EXTRA_SERVER_ARGS:-}"
     } >"${DEBUG_DIR}/launch-info.txt"
-
-    # Passwords are intentionally not written to the debug files.
 }
 
 stop_debug_monitor() {

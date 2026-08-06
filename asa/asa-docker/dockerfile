@@ -32,7 +32,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PROTON_DIR=/home/steam/proton \
     DATA_DIR=/data \
     ASA_DIR=/data/server \
-    CONFIG_DIR=/data/config \
     PROTON_PREFIX=/data/proton-prefix \
     CLUSTER_DIR=/cluster \
     LOG_DIR=/data/logs \
@@ -120,7 +119,6 @@ RUN useradd \
         "${SCRIPTS_DIR}" \
         "${DATA_DIR}" \
         "${ASA_DIR}" \
-        "${CONFIG_DIR}" \
         "${PROTON_PREFIX}" \
         "${CLUSTER_DIR}" \
         "${LOG_DIR}" \
@@ -142,6 +140,7 @@ RUN rm -f /etc/machine-id /var/lib/dbus/machine-id && \
     ln -sf /etc/machine-id /var/lib/dbus/machine-id
 
 # The container and all runtime processes remain non-root.
+
 USER 99:100
 WORKDIR /home/steam
 
@@ -191,11 +190,12 @@ COPY --chown=99:100 scripts/ /home/steam/scripts/
 RUN chmod 0755 /home/steam/scripts/*.sh && \
     ln -sf /home/steam/scripts/asa.sh /home/steam/scripts/asa
 
-# Persistent paths and ports
+# Persistent server installation, saves, native ASA configuration,
+# Proton prefix, logs, and shared cluster data.
+#
+# Native ASA configuration remains in:
+# /data/server/ShooterGame/Saved/Config/WindowsServer
 
 VOLUME ["/data", "/cluster"]
-
-EXPOSE 7777/udp
-EXPOSE 27020/tcp
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/home/steam/scripts/entrypoint.sh"]
