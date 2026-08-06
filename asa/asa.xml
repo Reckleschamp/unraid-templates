@@ -14,7 +14,7 @@
   <Project>https://github.com/Reckleschamp/unraid-templates</Project>
 
   <Overview>
-    ARK: Survival Ascended dedicated server for Unraid with multi-map cluster support.
+    ARK: Survival Ascended dedicated server with multi-map cluster support.
 
     Each container uses one private instance-data directory containing the ASA
     installation, configuration, saves, logs, Steam metadata, and Proton prefix.

@@ -1,49 +1,33 @@
+TODO- finish read me, add discord link
 # ASA Server for Unraid
 
-A Unraid Docker image for hosting **ARK: Survival Ascended** dedicated servers with multi-map cluster support.
+A Docker image for hosting **ARK: Survival Ascended** dedicated servers designed for unraid.
 
 ---
 
 # Installation
 
-1. Install the template from Community Apps.
-2. Select a server directory.
-3. Select a configuration directory.
-4. Select a shared cluster directory (optional).
-5. Configure your map and session name.
+1. 
+2. 
+3.  
+4. 
+5. 
 6. Start the container.
 
 ---
 
 # Directory Layout
 
-Each map has its own installation.
-
-```
-Island
-/server
-/config
-
-Scorched
-/server
-/config
-```
 
 Only `/cluster` is shared.
 
 ---
 
-# Configuration
-
-Edit
+# INI Edits
 
 ```
-/config/Game.ini
-/config/GameUserSettings.ini
-/config/Engine.ini
+The INI files generated into /config are auto copied on every startup into the correct location so its easier to find, edit and backup the ini
 ```
-
-These files are copied into the server installation every time the container starts.
 
 ---
 
@@ -56,23 +40,31 @@ Every server in the cluster must use:
 
 Each server should have:
 
-- its own `/server`
-- its own `/config`
+- its own `/data`
+- its own `/config` if you want 1 master ini you can test sharing this 
 - unique game port
 - unique RCON port
 
 ---
 
+# Troubleshooting
+
+ARK Survival Ascended Server has specific system requirements that must be met for the container to run properly:
+
+## The vm.max_map_count parameter MUST be increased to at least 262144
+
+Temporary Setting (resets after system reboot):
+`sudo sysctl -w vm.max_map_count=262144`
+Permanent Setting (recommended):
+`echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf sudo sysctl -p`
+⚠️ IMPORTANT NOTE: Without this setting, your ARK server container WILL fail to start. typically with "Allocator Stats" errors in the logs.
+
+If changes were made to the template after the first launch you might need to delete the proton folder and let it regenerate the needed prefixes, This will NOT delete any of your ark data or saves.
+
 # Support
 
-Please include:
-
-- Container logs
-- Docker image version
-- Unraid version
-- XML configuration (without passwords)
-
-when opening an issue.
+First enable debug mode in the template advanced options to capture logs into `/debug `
+Collect the log file and provide it when requesting support
 
 ---
 

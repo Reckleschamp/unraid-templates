@@ -14,7 +14,7 @@ initialize_config_file() {
         warn "${config_file} is empty and will be initialized."
     fi
 
-    # Import an existing non-empty ASA-generated configuration when available.
+    # Import an existing ASA-generated configuration when available.
     if [[ -s "${source_file}" ]]; then
         log "Initializing ${filename} from ASA's existing configuration."
 
