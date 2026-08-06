@@ -190,7 +190,6 @@ COPY --chown=99:100 scripts/ /home/steam/scripts/
 
 RUN chmod 0755 \
     /home/steam/scripts/*.sh \
-    /home/steam/scripts/asa
 
 # Persistent paths and ports
 
