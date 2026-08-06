@@ -78,9 +78,7 @@ wait_for_rcon_ready() {
         fi
 
         if ((SECONDS - start_time >= SERVER_STARTUP_TIMEOUT)); then
-            warn \
-                "ASA did not accept RCON commands within " \
-                "${SERVER_STARTUP_TIMEOUT} seconds."
+            warn "ASA did not accept RCON commands within ${SERVER_STARTUP_TIMEOUT} seconds."
             return 1
         fi
 

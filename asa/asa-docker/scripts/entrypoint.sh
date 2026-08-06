@@ -71,8 +71,6 @@ source "${SCRIPTS_DIR}/server.sh"
 source "${SCRIPTS_DIR}/rcon.sh"
 # shellcheck source=/dev/null
 source "${SCRIPTS_DIR}/shutdown.sh"
-# shellcheck source=/dev/null
-source "${SCRIPTS_DIR}/asa.sh"
 
 main() {
     prepare_directories

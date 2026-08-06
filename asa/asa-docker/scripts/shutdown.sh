@@ -43,16 +43,18 @@ shutdown_server() {
 
         log "Requesting world save."
 
-        send_rcon_command "SaveWorld" ||
+        if ! send_rcon_command "SaveWorld"; then
             warn "The RCON SaveWorld command failed."
+        fi
 
         log "Waiting ${SAVE_WAIT_SECONDS} seconds for the save to complete."
         sleep "${SAVE_WAIT_SECONDS}"
 
         log "Requesting graceful ASA shutdown."
 
-        send_rcon_command "DoExit" ||
+        if ! send_rcon_command "DoExit"; then
             warn "The RCON DoExit command failed."
+        fi
 
         if wait_for_server_exit "${STOP_TIMEOUT}"; then
             log "ASA exited following the RCON shutdown command."

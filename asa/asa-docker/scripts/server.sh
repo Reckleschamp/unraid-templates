@@ -104,9 +104,7 @@ start_virtual_display() {
 
             XVFB_PID=""
 
-            fatal \
-                "Xvfb did not become ready within " \
-                "${XVFB_STARTUP_TIMEOUT} seconds. Check ${xvfb_log}."
+            fatal "Xvfb did not become ready within ${XVFB_STARTUP_TIMEOUT} seconds. Check ${xvfb_log}."
         fi
 
         sleep 0.05
@@ -129,12 +127,16 @@ start_asa_log_stream() {
     #
     # -F follows the file by name and retries if ASA removes, rotates, or
     # recreates ShooterGame.log during startup.
-    tail \
-        --lines=0 \
-        --follow=name \
-        --retry \
-        "${ASA_LOG_FILE}" \
-        2>/dev/null &
+    while [[ ! -f "${ASA_LOG_FILE}" ]]; do
+        sleep 0.1
+        if [[ -n "${SERVER_PID:-}" ]] &&
+            ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+            warn "ASA exited before ShooterGame.log was created."
+            return
+        fi
+    done
+
+    tail -n 0 -F "${ASA_LOG_FILE}" 2>/dev/null &
 
     ASA_LOG_TAIL_PID=$!
 }
@@ -229,12 +231,13 @@ start_server() {
 
     log "ASA launched under Proton with PID ${SERVER_PID}."
 
-    if ! wait_for_server_ready; then
-        warn "ASA readiness was not confirmed."
-
-        if [[ -n "${SERVER_PID}" ]] &&
-            ! kill -0 "${SERVER_PID}" 2>/dev/null; then
-            warn "ASA exited before startup completed."
+    if is_true "${RCON_ENABLED}"; then
+        if ! wait_for_server_ready; then
+            warn "ASA did not become ready."
+            if [[ -n "${SERVER_PID:-}" ]] &&
+                ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+                warn "ASA exited before startup was completed."
+            fi
         fi
     fi
 
