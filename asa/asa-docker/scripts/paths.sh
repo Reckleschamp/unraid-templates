@@ -5,7 +5,6 @@ prepare_directories() {
 
     require_writable_directory "${DATA_DIR}"
     require_writable_directory "${ASA_DIR}"
-    require_writable_directory "${CONFIG_DIR}"
     require_writable_directory "${PROTON_PREFIX}"
     require_writable_directory "${CLUSTER_DIR}"
     require_writable_directory "${ASA_CONFIG_DIR}"
