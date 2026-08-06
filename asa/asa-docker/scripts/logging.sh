@@ -23,7 +23,6 @@ write_debug_system_info() {
         printf 'Cluster ID: %s\n' "${CLUSTER_ID}"
         printf 'Data directory: %s\n' "${DATA_DIR}"
         printf 'Server directory: %s\n' "${ASA_DIR}"
-        printf 'Config directory: %s\n' "${CONFIG_DIR}"
         printf 'Cluster directory: %s\n' "${CLUSTER_DIR}"
         printf 'Proton directory: %s\n' "${PROTON_DIR}"
         printf 'Proton prefix: %s\n' "${PROTON_PREFIX}"
@@ -168,8 +167,6 @@ write_launch_information() {
         printf 'BattlEye enabled: %s\n' "${BATTLEYE}"
         printf 'Extra server arguments: %s\n' "${EXTRA_SERVER_ARGS:-}"
     } >"${DEBUG_DIR}/launch-info.txt"
-
-    # Passwords are intentionally not written to the debug files.
 }
 
 stop_debug_monitor() {

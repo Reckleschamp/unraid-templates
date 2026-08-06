@@ -32,7 +32,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PROTON_DIR=/home/steam/proton \
     DATA_DIR=/data \
     ASA_DIR=/data/server \
-    CONFIG_DIR=/data/config \
     PROTON_PREFIX=/data/proton-prefix \
     CLUSTER_DIR=/cluster \
     LOG_DIR=/data/logs \
@@ -120,7 +119,6 @@ RUN useradd \
         "${SCRIPTS_DIR}" \
         "${DATA_DIR}" \
         "${ASA_DIR}" \
-        "${CONFIG_DIR}" \
         "${PROTON_PREFIX}" \
         "${CLUSTER_DIR}" \
         "${LOG_DIR}" \

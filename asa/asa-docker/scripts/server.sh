@@ -4,7 +4,6 @@ build_server_url() {
     local server_url="${MAP_NAME}?listen"
 
     server_url+="?SessionName=${SESSION_NAME}"
-    server_url+="?MaxPlayers=${MAX_PLAYERS}"
 
     if is_true "${RCON_ENABLED}"; then
         if [[ -z "${ADMIN_PASSWORD}" ]]; then
@@ -37,11 +36,16 @@ build_launch_arguments() {
     LAUNCH_ARGUMENTS=(
         "${server_url}"
         "-port=${ASA_PORT}"
+        "-WinLiveMaxPlayers=${MAX_PLAYERS}"
         "-clusterid=${CLUSTER_ID}"
         "-ClusterDirOverride=Z:\\cluster"
         "-server"
         "-log"
     )
+
+    if [[ -n "${MOD_IDS}" ]]; then
+        LAUNCH_ARGUMENTS+=("-mods=${MOD_IDS}")
+    fi
 
     if ! is_true "${BATTLEYE}"; then
         LAUNCH_ARGUMENTS+=("-NoBattlEye")
@@ -156,20 +160,7 @@ stop_asa_log_stream() {
 
 print_server_ready_banner() {
     log "============================================================"
-    log "ASA SERVER READY"
-    log "Instance: ${INSTANCE_NAME}"
-    log "Session: ${SESSION_NAME}"
-    log "Map: ${MAP_NAME}"
-    log "Game port: ${ASA_PORT}/UDP"
-
-    if is_true "${RCON_ENABLED}"; then
-        log "RCON port: ${RCON_PORT}/TCP"
-    else
-        log "RCON: disabled"
-    fi
-
-    log "Cluster ID: ${CLUSTER_ID}"
-    log "Maximum players: ${MAX_PLAYERS}"
+    log "ASA SERVER Accepted RCON connection."
     log "============================================================"
 }
 
