@@ -1,0 +1,190 @@
+FROM debian:13-slim
+
+ARG PROTON_VERSION=GE-Proton10-33
+ARG STEAM_APP_ID=2430930
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US:en \
+    LC_ALL=en_US.UTF-8 \
+    HOME=/home/steam \
+    DISPLAY=:0.0 \
+    XDG_RUNTIME_DIR=/run/user/99 \
+    PROTON_USE_ESYNC=1 \
+    STEAMCMD_DIR=/home/steam/steamcmd \
+    STEAM_ROOT=/home/steam/Steam \
+    PROTON_DIR=/home/steam/proton \
+    DATA_DIR=/data \
+    ASA_DIR=/data/server \
+    CONFIG_DIR=/data/config \
+    PROTON_PREFIX=/data/proton-prefix \
+    CLUSTER_DIR=/cluster \
+    LOG_DIR=/data/logs \
+    SCRIPTS_DIR=/home/steam/scripts \
+    STEAM_COMPAT_CLIENT_INSTALL_PATH=/home/steam/Steam \
+    STEAM_COMPAT_DATA_PATH=/data/proton-prefix \
+    ASA_APP_ID=${STEAM_APP_ID} \
+    IMAGE_PROTON_VERSION=${PROTON_VERSION}
+
+###############################################################################
+# Runtime dependencies
+###############################################################################
+
+RUN dpkg --add-architecture i386 && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        bash \
+        ca-certificates \
+        cabextract \
+        curl \
+        dbus \
+        file \
+        locales \
+        netcat-openbsd \
+        procps \
+        python3 \
+        tar \
+        tini \
+        util-linux \
+        winbind \
+        xauth \
+        xvfb \
+        xz-utils \
+        lib32gcc-s1 \
+        lib32stdc++6 \
+        libc6:i386 \
+        libgcc-s1:i386 \
+        libstdc++6:i386 \
+        libnss3 \
+        libx11-6 \
+        libx11-6:i386 \
+        libxext6 \
+        libxext6:i386 \
+        libxrandr2 \
+        libxrandr2:i386 \
+        libxrender1 \
+        libxrender1:i386 \
+        libfreetype6 \
+        libfreetype6:i386 \
+        libfontconfig1 \
+        libfontconfig1:i386 \
+        libglib2.0-0 \
+        libglib2.0-0:i386 \
+        libgstreamer1.0-0 \
+        libgstreamer1.0-0:i386 \
+        libpulse0 \
+        libpulse0:i386 \
+        libasound2 \
+        libasound2:i386 \
+        libvulkan1 \
+        libvulkan1:i386 && \
+    sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen && \
+    locale-gen && \
+    rm -rf /var/lib/apt/lists/*
+
+###############################################################################
+# Non-root runtime user and directories
+###############################################################################
+
+RUN useradd \
+        --uid 99 \
+        --gid 100 \
+        --create-home \
+        --home-dir /home/steam \
+        --shell /bin/bash \
+        steam && \
+    mkdir -p \
+        "${STEAMCMD_DIR}" \
+        "${STEAM_ROOT}" \
+        "${PROTON_DIR}" \
+        "${SCRIPTS_DIR}" \
+        "${DATA_DIR}" \
+        "${ASA_DIR}" \
+        "${CONFIG_DIR}" \
+        "${PROTON_PREFIX}" \
+        "${CLUSTER_DIR}" \
+        "${LOG_DIR}" \
+        /tmp/.X11-unix \
+        "${XDG_RUNTIME_DIR}" && \
+    chown -R 99:100 \
+        /home/steam \
+        "${DATA_DIR}" \
+        "${CLUSTER_DIR}" \
+        "${XDG_RUNTIME_DIR}" && \
+    chmod 1777 /tmp/.X11-unix && \
+    chmod 0700 "${XDG_RUNTIME_DIR}"
+
+###############################################################################
+# D-Bus machine identity
+###############################################################################
+
+RUN rm -f /etc/machine-id /var/lib/dbus/machine-id && \
+    dbus-uuidgen --ensure=/etc/machine-id && \
+    mkdir -p /var/lib/dbus && \
+    ln -sf /etc/machine-id /var/lib/dbus/machine-id
+
+# The container and all runtime processes remain non-root.
+USER 99:100
+WORKDIR /home/steam
+
+###############################################################################
+# SteamCMD
+###############################################################################
+
+RUN curl \
+        --fail \
+        --show-error \
+        --location \
+        https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz \
+        --output /tmp/steamcmd.tar.gz && \
+    tar \
+        -xzf /tmp/steamcmd.tar.gz \
+        -C "${STEAMCMD_DIR}" && \
+    rm -f /tmp/steamcmd.tar.gz
+
+RUN "${STEAMCMD_DIR}/steamcmd.sh" +quit
+
+RUN mkdir -p \
+        "${HOME}/.steam/sdk32" \
+        "${HOME}/.steam/sdk64" && \
+    ln -sf \
+        "${STEAMCMD_DIR}/linux32/steamclient.so" \
+        "${HOME}/.steam/sdk32/steamclient.so" && \
+    ln -sf \
+        "${STEAMCMD_DIR}/linux64/steamclient.so" \
+        "${HOME}/.steam/sdk64/steamclient.so"
+
+###############################################################################
+# GE-Proton
+###############################################################################
+
+RUN curl \
+        --fail \
+        --show-error \
+        --location \
+        "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${PROTON_VERSION}/${PROTON_VERSION}.tar.gz" \
+        --output /tmp/proton.tar.gz && \
+    tar \
+        -xzf /tmp/proton.tar.gz \
+        -C "${PROTON_DIR}" \
+        --strip-components=1 && \
+    rm -f /tmp/proton.tar.gz
+
+###############################################################################
+# Container scripts
+###############################################################################
+
+COPY --chown=99:100 scripts/ /home/steam/scripts/
+
+RUN chmod 0755 /home/steam/scripts/*.sh
+
+###############################################################################
+# Persistent paths and ports
+###############################################################################
+
+VOLUME ["/data", "/cluster"]
+
+EXPOSE 7777/udp
+EXPOSE 27020/tcp
+
+ENTRYPOINT ["/usr/bin/tini", "--", "/home/steam/scripts/entrypoint.sh"]

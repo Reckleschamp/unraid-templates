@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<Container version="2">
+
+  <Name>ASA-Server</Name>
+  <Repository>reckleschamp/asa-server:development</Repository>
+  <Registry>https://hub.docker.com/r/reckleschamp/asa-server</Registry>
+
+  <Network>host</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+
+  <Support>https://github.com/Reckleschamp/unraid-templates/issues</Support>
+  <Project>https://github.com/Reckleschamp/unraid-templates</Project>
+
+  <Overview>
+    ARK: Survival Ascended dedicated server for Unraid with multi-map cluster support.
+
+    Each container uses one private instance-data directory containing the ASA
+    installation, configuration, saves, logs, Steam metadata, and Proton prefix.
+
+    Multiple map containers can share one cluster directory by using the same
+    Cluster ID and Shared Cluster Directory host path.
+
+    Master INI files are stored under /data/config and copied into ASA's
+    WindowsServer configuration directory each time the container starts.
+    Missing INI files are generated automatically during the first startup.
+  </Overview>
+
+  <Category>GameServers:</Category>
+  <WebUI/>
+  <TemplateURL>https://raw.githubusercontent.com/Reckleschamp/unraid-templates/main/asa/asa.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/Reckleschamp/unraid-templates/main/asa/images/asa.png</Icon>
+
+  <ExtraParams>--restart=unless-stopped --stop-timeout=210</ExtraParams>
+  <PostArgs/>
+  <CPUset/>
+
+  <!-- Persistent storage -->
+  <Config Name="Instance Data" Target="/data" Default="/mnt/user/appdata/asa-server" Mode="rw" Description="Private data for this map, including the ASA installation, configuration, saves, logs, and Proton prefix. Every map container must use a different host directory." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/asa-server</Config>
+  <Config Name="Shared Cluster Directory" Target="/cluster" Default="/mnt/user/appdata/asa-cluster" Mode="rw" Description="Shared player, item, and creature transfer data. Every map in the same cluster must use this exact same host directory." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/asa-cluster</Config>
+  <!-- Basic server identity -->
+  <Config Name="Instance Name" Target="INSTANCE_NAME" Default="ASA Server" Mode="" Description="Friendly instance name shown in the container logs. This does not have to match the public session name." Type="Variable" Display="always" Required="true" Mask="false">ASA Server</Config>
+  <Config Name="Session Name" Target="SESSION_NAME" Default="My ASA Server" Mode="" Description="Public server name displayed in the ARK server browser." Type="Variable" Display="always" Required="true" Mask="false">My ASA Server</Config>
+  <Config Name="Map Name" Target="MAP_NAME" Default="TheIsland_WP" Mode="" Description="ASA map launch name. Examples include TheIsland_WP and Astraeos_WP." Type="Variable" Display="always" Required="true" Mask="false">TheIsland_WP</Config>
+  <Config Name="Maximum Players" Target="MAX_PLAYERS" Default="10" Mode="" Description="Maximum number of players allowed on this map." Type="Variable" Display="always" Required="true" Mask="false">10</Config>
+  <!-- Network ports -->
+  <Config Name="Game Port" Target="ASA_PORT" Default="7777" Mode="" Description="UDP port used directly by ASA. Every map container must use a unique game port." Type="Variable" Display="always" Required="true" Mask="false">7777</Config>
+  <Config Name="RCON Port" Target="RCON_PORT" Default="27020" Mode="" Description="TCP RCON port used directly by ASA and the shutdown scripts. Every map container must use a unique RCON port." Type="Variable" Display="always" Required="true" Mask="false">27020</Config>
+  <!-- Cluster -->
+  <Config Name="Cluster ID" Target="CLUSTER_ID" Default="cluster" Mode="" Description="Cluster identifier. Every map in the same cluster must use exactly the same value." Type="Variable" Display="always" Required="true" Mask="false">cluster</Config>
+  <!-- Passwords -->
+  <Config Name="Server Admin Password" Target="ADMIN_PASSWORD" Default="" Mode="" Description="Administrator password passed to ASA as ServerAdminPassword and used for RCON authentication." Type="Variable" Display="always" Required="true" Mask="true"/>
+  <Config Name="Player Server Password" Target="SERVER_PASSWORD" Default="" Mode="" Description="Optional password players must enter to join. Leave blank for no player password." Type="Variable" Display="always" Required="false" Mask="true"/>
+  <!-- Container behavior -->
+  <Config Name="Time Zone" Target="TZ" Default="America/Chicago" Mode="" Description="Container time zone." Type="Variable" Display="advanced" Required="true" Mask="false">America/Chicago</Config>
+  <Config Name="Update Server at Startup" Target="UPDATE_SERVER" Default="true" Mode="" Description="When true, SteamCMD checks for ASA server updates before starting the map." Type="Variable" Display="advanced" Required="true" Mask="false">true</Config>
+  <Config Name="Validate Server Files" Target="VALIDATE_SERVER" Default="false" Mode="" Description="When true, SteamCMD validates the complete ASA installation during startup. This substantially increases startup time." Type="Variable" Display="advanced" Required="true" Mask="false">false</Config>
+  <Config Name="Enable BattlEye" Target="BATTLEYE" Default="false" Mode="" Description="Set to true to launch ASA with BattlEye. When false, the container adds the -NoBattlEye launch argument." Type="Variable" Display="advanced" Required="true" Mask="false">false</Config>
+  <Config Name="Debug Logging" Target="DEBUG_LOGGING" Default="false" Mode="" Description="Creates persistent container, Proton, system-information, launch-information, and ASA diagnostic files under /data/logs/debug. Enable only while troubleshooting." Type="Variable" Display="advanced" Required="true" Mask="false">false</Config>
+  <Config Name="Debug Log Maximum Size" Target="DEBUG_LOG_MAX_MB" Default="100" Mode="" Description="Maximum size in MB for each generated container or Proton debug log. Older content is removed while retaining the newest diagnostic information." Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
+  <Config Name="World Save Wait" Target="SAVE_WAIT_SECONDS" Default="10" Mode="" Description="Seconds to wait after issuing an RCON SaveWorld command before requesting server shutdown." Type="Variable" Display="advanced" Required="true" Mask="false">10</Config>
+  <Config Name="Graceful Shutdown Timeout" Target="STOP_TIMEOUT" Default="180" Mode="" Description="Maximum seconds to wait for ASA to exit during graceful shutdown. Docker's stop timeout is set to 210 seconds." Type="Variable" Display="advanced" Required="true" Mask="false">180</Config>
+  <Config Name="Extra Server Arguments" Target="EXTRA_SERVER_ARGS" Default="" Mode="" Description="Optional additional command-line arguments passed to ArkAscendedServer.exe. Separate arguments with spaces." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+</Container>
