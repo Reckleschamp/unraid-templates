@@ -4,10 +4,8 @@ set -Eeuo pipefail
 
 # Script location
 SCRIPTS_DIR="${SCRIPTS_DIR:-/home/steam/scripts}"
-
 # shellcheck source=/dev/null
 source "${SCRIPTS_DIR}/common.sh"
-
 # Internal application paths
 STEAMCMD_DIR="${STEAMCMD_DIR:-/home/steam/steamcmd}"
 STEAM_ROOT="${STEAM_ROOT:-/home/steam/Steam}"
@@ -23,26 +21,30 @@ DEBUG_CONTAINER_LOG="${DEBUG_CONTAINER_LOG:-${DEBUG_DIR}/container.log}"
 DEBUG_PROTON_DIR="${DEBUG_PROTON_DIR:-${DEBUG_DIR}/proton}"
 DEBUG_ASA_DIR="${DEBUG_ASA_DIR:-${DEBUG_DIR}/asa}"
 ASA_CONFIG_DIR="${ASA_DIR}/ShooterGame/Saved/Config/WindowsServer"
+ASA_LOG_FILE="${ASA_DIR}/ShooterGame/Saved/Logs/ShooterGame.log"
 ASA_EXE="${ASA_DIR}/ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
 STEAMCMD="${STEAMCMD_DIR}/steamcmd.sh"
 PROTON="${PROTON_DIR}/proton"
-
-# Steam application ID for Ark: Survival Ascended
+# Steam application for ark survival ascended
 ASA_APP_ID="${ASA_APP_ID:-2430930}"
-
 # Server settings
 INSTANCE_NAME="${INSTANCE_NAME:-ASA Server}"
 MAP_NAME="${MAP_NAME:-TheIsland_WP}"
 SESSION_NAME="${SESSION_NAME:-${INSTANCE_NAME}}"
 ASA_PORT="${ASA_PORT:-7777}"
-RCON_PORT="${RCON_PORT:-27020}"
 MAX_PLAYERS="${MAX_PLAYERS:-10}"
 CLUSTER_ID="${CLUSTER_ID:-cluster}"
 SERVER_PASSWORD="${SERVER_PASSWORD:-}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
+RCON_ENABLED="${RCON_ENABLED:-true}"
+RCON_PORT="${RCON_PORT:-27020}"
 UPDATE_SERVER="${UPDATE_SERVER:-true}"
 VALIDATE_SERVER="${VALIDATE_SERVER:-false}"
 BATTLEYE="${BATTLEYE:-false}"
+# Startup and shutdown timing
+XVFB_STARTUP_TIMEOUT="${XVFB_STARTUP_TIMEOUT:-10}"
+SERVER_STARTUP_TIMEOUT="${SERVER_STARTUP_TIMEOUT:-600}"
+RCON_RETRY_INTERVAL="${RCON_RETRY_INTERVAL:-1}"
 STOP_TIMEOUT="${STOP_TIMEOUT:-180}"
 SAVE_WAIT_SECONDS="${SAVE_WAIT_SECONDS:-10}"
 # Debug settings
@@ -50,10 +52,11 @@ DEBUG_LOGGING="${DEBUG_LOGGING:-false}"
 DEBUG_LOG_MAX_MB="${DEBUG_LOG_MAX_MB:-100}"
 # Runtime state
 SERVER_PID=""
-SHUTDOWN_REQUESTED=false
+XVFB_PID=""
+ASA_LOG_TAIL_PID=""
 DEBUG_MONITOR_PID=""
+SHUTDOWN_REQUESTED=false
 LAUNCH_ARGUMENTS=()
-
 # shellcheck source=/dev/null
 source "${SCRIPTS_DIR}/paths.sh"
 # shellcheck source=/dev/null

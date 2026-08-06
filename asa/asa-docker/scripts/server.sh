@@ -5,8 +5,17 @@ build_server_url() {
 
     server_url+="?SessionName=${SESSION_NAME}"
     server_url+="?MaxPlayers=${MAX_PLAYERS}"
-    server_url+="?RCONEnabled=True"
-    server_url+="?RCONPort=${RCON_PORT}"
+
+    if is_true "${RCON_ENABLED}"; then
+        if [[ -z "${ADMIN_PASSWORD}" ]]; then
+            fatal "ADMIN_PASSWORD must be set when RCON is enabled."
+        fi
+
+        server_url+="?RCONEnabled=True"
+        server_url+="?RCONPort=${RCON_PORT}"
+    else
+        server_url+="?RCONEnabled=False"
+    fi
 
     if [[ -n "${SERVER_PASSWORD}" ]]; then
         server_url+="?ServerPassword=${SERVER_PASSWORD}"
@@ -21,6 +30,7 @@ build_server_url() {
 
 build_launch_arguments() {
     local server_url=""
+    local extra_arguments=()
 
     server_url="$(build_server_url)"
 
@@ -38,8 +48,6 @@ build_launch_arguments() {
     fi
 
     if [[ -n "${EXTRA_SERVER_ARGS:-}" ]]; then
-        local extra_arguments=()
-
         read -r -a extra_arguments <<<"${EXTRA_SERVER_ARGS}"
         LAUNCH_ARGUMENTS+=("${extra_arguments[@]}")
     fi
@@ -60,31 +68,123 @@ configure_server_environment() {
 
 start_virtual_display() {
     local xvfb_log="${LOG_DIR}/xvfb.log"
-    local xvfb_pid=""
+    local display_number=""
+    local xvfb_display=""
+    local start_time=0
 
-    if pgrep -x Xvfb >/dev/null 2>&1; then
-        log "Virtual X display is already running."
+    if xdpyinfo -display "${DISPLAY}" >/dev/null 2>&1; then
+        log "Virtual X display is already ready on ${DISPLAY}."
         return
     fi
 
     mkdir -p "${LOG_DIR}"
 
-    log "Starting virtual X display on ${DISPLAY}."
+    display_number="${DISPLAY#:}"
+    display_number="${display_number%%.*}"
+    xvfb_display=":${display_number}"
 
-    Xvfb "${DISPLAY}" \
+    log "Starting virtual X display on ${xvfb_display}."
+
+    Xvfb "${xvfb_display}" \
         -screen 0 1024x768x24 \
         -nolisten tcp \
         >"${xvfb_log}" 2>&1 &
 
-    xvfb_pid=$!
+    XVFB_PID=$!
+    start_time="${SECONDS}"
 
-    sleep 2
+    while ! xdpyinfo -display "${DISPLAY}" >/dev/null 2>&1; do
+        if ! kill -0 "${XVFB_PID}" 2>/dev/null; then
+            fatal "Xvfb exited during startup. Check ${xvfb_log}."
+        fi
 
-    if ! kill -0 "${xvfb_pid}" 2>/dev/null; then
-        fatal "Xvfb failed to start. Check ${xvfb_log}."
+        if ((SECONDS - start_time >= XVFB_STARTUP_TIMEOUT)); then
+            kill "${XVFB_PID}" 2>/dev/null || true
+            wait "${XVFB_PID}" 2>/dev/null || true
+
+            XVFB_PID=""
+
+            fatal "Xvfb did not become ready within ${XVFB_STARTUP_TIMEOUT} seconds. Check ${xvfb_log}."
+        fi
+
+        sleep 0.05
+    done
+
+    log "Virtual X display is ready with PID ${XVFB_PID}."
+}
+
+start_asa_log_stream() {
+    local asa_log_directory=""
+
+    asa_log_directory="$(dirname "${ASA_LOG_FILE}")"
+
+    mkdir -p "${asa_log_directory}"
+
+    log "Starting live ASA log stream."
+    log "ASA log file: ${ASA_LOG_FILE}"
+
+    # Start at the end of an existing log so old lines are not replayed.
+    #
+    # -F follows the file by name and retries if ASA removes, rotates, or
+    # recreates ShooterGame.log during startup.
+    while [[ ! -f "${ASA_LOG_FILE}" ]]; do
+        sleep 0.1
+        if [[ -n "${SERVER_PID:-}" ]] &&
+            ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+            warn "ASA exited before ShooterGame.log was created."
+            return
+        fi
+    done
+
+    tail -n 0 -F "${ASA_LOG_FILE}" 2>/dev/null &
+
+    ASA_LOG_TAIL_PID=$!
+}
+
+stop_asa_log_stream() {
+    if [[ -z "${ASA_LOG_TAIL_PID:-}" ]]; then
+        return
     fi
 
-    log "Virtual X display started with PID ${xvfb_pid}."
+    if kill -0 "${ASA_LOG_TAIL_PID}" 2>/dev/null; then
+        kill "${ASA_LOG_TAIL_PID}" 2>/dev/null || true
+        wait "${ASA_LOG_TAIL_PID}" 2>/dev/null || true
+    fi
+
+    ASA_LOG_TAIL_PID=""
+}
+
+print_server_ready_banner() {
+    log "============================================================"
+    log "ASA SERVER READY"
+    log "Instance: ${INSTANCE_NAME}"
+    log "Session: ${SESSION_NAME}"
+    log "Map: ${MAP_NAME}"
+    log "Game port: ${ASA_PORT}/UDP"
+
+    if is_true "${RCON_ENABLED}"; then
+        log "RCON port: ${RCON_PORT}/TCP"
+    else
+        log "RCON: disabled"
+    fi
+
+    log "Cluster ID: ${CLUSTER_ID}"
+    log "Maximum players: ${MAX_PLAYERS}"
+    log "============================================================"
+}
+
+wait_for_server_ready() {
+    if ! is_true "${RCON_ENABLED}"; then
+        warn "RCON is disabled, so server readiness cannot be verified through RCON."
+        return 1
+    fi
+
+    if wait_for_rcon_ready; then
+        print_server_ready_banner
+        return 0
+    fi
+
+    return 1
 }
 
 start_server() {
@@ -102,7 +202,13 @@ start_server() {
     log "Map: ${MAP_NAME}"
     log "Session: ${SESSION_NAME}"
     log "Game port: ${ASA_PORT}/UDP"
-    log "RCON port: ${RCON_PORT}/TCP"
+
+    if is_true "${RCON_ENABLED}"; then
+        log "RCON port: ${RCON_PORT}/TCP"
+    else
+        log "RCON: disabled"
+    fi
+
     log "Cluster ID: ${CLUSTER_ID}"
     log "Cluster directory: ${CLUSTER_DIR}"
     log "Maximum players: ${MAX_PLAYERS}"
@@ -116,15 +222,31 @@ start_server() {
 
     cd "$(dirname "${ASA_EXE}")"
 
+    # Begin watching ShooterGame.log before starting ASA so early log entries
+    # are less likely to be missed.
+    start_asa_log_stream
+
     "${PROTON}" run "${ASA_EXE}" "${LAUNCH_ARGUMENTS[@]}" &
     SERVER_PID=$!
 
     log "ASA launched under Proton with PID ${SERVER_PID}."
 
+    if is_true "${RCON_ENABLED}"; then
+        if ! wait_for_server_ready; then
+            warn "ASA did not become ready."
+            if [[ -n "${SERVER_PID:-}" ]] &&
+                ! kill -0 "${SERVER_PID}" 2>/dev/null; then
+                warn "ASA exited before startup was completed."
+            fi
+        fi
+    fi
+
     set +e
     wait "${SERVER_PID}"
     exit_code=$?
     set -e
+
+    stop_asa_log_stream
 
     SERVER_PID=""
 

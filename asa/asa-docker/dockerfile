@@ -1,3 +1,19 @@
+FROM debian:13-slim AS mcrcon-builder
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        gcc \
+        git \
+        libc6-dev \
+        make && \
+    git clone --depth 1 \
+        https://github.com/Tiiffi/mcrcon.git \
+        /src/mcrcon && \
+    make -C /src/mcrcon && \
+    strip /src/mcrcon/mcrcon
+
+
 FROM debian:13-slim
 
 ARG PROTON_VERSION=GE-Proton10-33
@@ -24,11 +40,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
     STEAM_COMPAT_CLIENT_INSTALL_PATH=/home/steam/Steam \
     STEAM_COMPAT_DATA_PATH=/data/proton-prefix \
     ASA_APP_ID=${STEAM_APP_ID} \
-    IMAGE_PROTON_VERSION=${PROTON_VERSION}
+    IMAGE_PROTON_VERSION=${PROTON_VERSION} \
+    PATH=/home/steam/scripts:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-###############################################################################
 # Runtime dependencies
-###############################################################################
 
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
@@ -48,6 +63,7 @@ RUN dpkg --add-architecture i386 && \
         util-linux \
         winbind \
         xauth \
+        x11-utils \
         xvfb \
         xz-utils \
         lib32gcc-s1 \
@@ -82,9 +98,13 @@ RUN dpkg --add-architecture i386 && \
     locale-gen && \
     rm -rf /var/lib/apt/lists/*
 
-###############################################################################
+# RCON client
+
+COPY --from=mcrcon-builder \
+    /src/mcrcon/mcrcon \
+    /usr/local/bin/mcrcon
+
 # Non-root runtime user and directories
-###############################################################################
 
 RUN useradd \
         --uid 99 \
@@ -114,9 +134,7 @@ RUN useradd \
     chmod 1777 /tmp/.X11-unix && \
     chmod 0700 "${XDG_RUNTIME_DIR}"
 
-###############################################################################
 # D-Bus machine identity
-###############################################################################
 
 RUN rm -f /etc/machine-id /var/lib/dbus/machine-id && \
     dbus-uuidgen --ensure=/etc/machine-id && \
@@ -127,9 +145,7 @@ RUN rm -f /etc/machine-id /var/lib/dbus/machine-id && \
 USER 99:100
 WORKDIR /home/steam
 
-###############################################################################
 # SteamCMD
-###############################################################################
 
 RUN curl \
         --fail \
@@ -154,9 +170,7 @@ RUN mkdir -p \
         "${STEAMCMD_DIR}/linux64/steamclient.so" \
         "${HOME}/.steam/sdk64/steamclient.so"
 
-###############################################################################
 # GE-Proton
-###############################################################################
 
 RUN curl \
         --fail \
@@ -170,17 +184,14 @@ RUN curl \
         --strip-components=1 && \
     rm -f /tmp/proton.tar.gz
 
-###############################################################################
 # Container scripts
-###############################################################################
 
 COPY --chown=99:100 scripts/ /home/steam/scripts/
 
-RUN chmod 0755 /home/steam/scripts/*.sh
+RUN chmod 0755 /home/steam/scripts/*.sh && \
+    ln -sf /home/steam/scripts/asa.sh /home/steam/scripts/asa
 
-###############################################################################
 # Persistent paths and ports
-###############################################################################
 
 VOLUME ["/data", "/cluster"]
 
