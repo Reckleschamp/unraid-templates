@@ -127,12 +127,9 @@ start_asa_log_stream() {
     log "Starting live ASA log stream."
     log "ASA log file: ${ASA_LOG_FILE}"
 
-    # Start at the end of an existing log so old lines are not replayed.
-    #
-    # -F follows the file by name and retries if ASA removes, rotates, or
-    # recreates ShooterGame.log during startup.
     while [[ ! -f "${ASA_LOG_FILE}" ]]; do
         sleep 0.1
+
         if [[ -n "${SERVER_PID:-}" ]] &&
             ! kill -0 "${SERVER_PID}" 2>/dev/null; then
             warn "ASA exited before ShooterGame.log was created."
@@ -205,7 +202,7 @@ start_server() {
     log "Maximum players: ${MAX_PLAYERS}"
     log "Data directory: ${DATA_DIR}"
     log "Server directory: ${ASA_DIR}"
-    log "Config directory: ${CONFIG_DIR}"
+    log "Native ASA config directory: ${ASA_CONFIG_DIR}"
     log "Proton prefix: ${PROTON_PREFIX}"
     log "Proton directory: ${PROTON_DIR}"
     log "Display: ${DISPLAY}"
@@ -213,8 +210,6 @@ start_server() {
 
     cd "$(dirname "${ASA_EXE}")"
 
-    # Begin watching ShooterGame.log before starting ASA so early log entries
-    # are less likely to be missed.
     start_asa_log_stream
 
     "${PROTON}" run "${ASA_EXE}" "${LAUNCH_ARGUMENTS[@]}" &
@@ -225,6 +220,7 @@ start_server() {
     if is_true "${RCON_ENABLED}"; then
         if ! wait_for_server_ready; then
             warn "ASA did not become ready."
+
             if [[ -n "${SERVER_PID:-}" ]] &&
                 ! kill -0 "${SERVER_PID}" 2>/dev/null; then
                 warn "ASA exited before startup was completed."
