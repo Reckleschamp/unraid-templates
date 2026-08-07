@@ -139,8 +139,6 @@ RUN rm -f /etc/machine-id /var/lib/dbus/machine-id && \
     mkdir -p /var/lib/dbus && \
     ln -sf /etc/machine-id /var/lib/dbus/machine-id
 
-# The container and all runtime processes remain non-root.
-
 USER 99:100
 WORKDIR /home/steam
 
@@ -189,12 +187,6 @@ COPY --chown=99:100 scripts/ /home/steam/scripts/
 
 RUN chmod 0755 /home/steam/scripts/*.sh && \
     ln -sf /home/steam/scripts/asa.sh /home/steam/scripts/asa
-
-# Persistent server installation, saves, native ASA configuration,
-# Proton prefix, logs, and shared cluster data.
-#
-# Native ASA configuration remains in:
-# /data/server/ShooterGame/Saved/Config/WindowsServer
 
 VOLUME ["/data", "/cluster"]
 
