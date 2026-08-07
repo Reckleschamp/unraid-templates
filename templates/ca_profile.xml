@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Maintainer>
+  <Icon>https://raw.githubusercontent.com/reckleschamp/unraid-templates/images/profile.jpg</Icon>
+  <Profile>
+    Creating templates for Unraid.
+  </Profile>
+  <DonateLink>https://www.paypal.me/Brown520</DonateLink>
+  <DonateText>Donate if you want but it's not needed.</DonateText>
+</Maintainer>

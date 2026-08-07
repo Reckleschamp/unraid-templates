@@ -1,2 +1,2 @@
 # unraid-templates
-templates for unraid servers
+xml templates for unraid
