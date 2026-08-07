@@ -138,7 +138,6 @@ start_asa_log_stream() {
     done
 
     tail -n 0 -F "${ASA_LOG_FILE}" 2>/dev/null &
-
     ASA_LOG_TAIL_PID=$!
 }
 
@@ -153,12 +152,6 @@ stop_asa_log_stream() {
     fi
 
     ASA_LOG_TAIL_PID=""
-}
-
-print_server_ready_banner() {
-    log "============================================================"
-    log "ASA SERVER Accepted RCON connection."
-    log "============================================================"
 }
 
 wait_for_server_ready() {
@@ -210,12 +203,12 @@ start_server() {
 
     cd "$(dirname "${ASA_EXE}")"
 
-    start_asa_log_stream
-
     "${PROTON}" run "${ASA_EXE}" "${LAUNCH_ARGUMENTS[@]}" &
     SERVER_PID=$!
 
     log "ASA launched under Proton with PID ${SERVER_PID}."
+
+    start_asa_log_stream
 
     if is_true "${RCON_ENABLED}"; then
         if ! wait_for_server_ready; then

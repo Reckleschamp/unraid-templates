@@ -41,7 +41,12 @@ shutdown_server() {
     if rcon_can_connect; then
         log "RCON connection established."
 
-        log "Requesting world save."
+        log "Broadcasting shutdown notice to players."
+        if ! send_rcon_command "Broadcast Server shutting down in"; then
+            warn "The RCON Broadcast command failed."
+        fi
+
+        sleep 2
 
         if ! send_rcon_command "SaveWorld"; then
             warn "The RCON SaveWorld command failed."

@@ -26,7 +26,7 @@ Only `/cluster` is shared.
 # INI Edits
 
 ```
-The INI files generated into /config are auto copied on every startup into the correct location so its easier to find, edit and backup the ini
+
 ```
 
 ---
@@ -41,7 +41,6 @@ Every server in the cluster must use:
 Each server should have:
 
 - its own `/data`
-- its own `/config` if you want 1 master ini you can test sharing this 
 - unique game port
 - unique RCON port
 
