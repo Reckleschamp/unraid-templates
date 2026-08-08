@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <Container version="2">
-  <Name>ASA-Dev-Test</Name>
+  <Name>ARK-SurvivalAscended</Name>
   <Repository>reckleschamp/asa-server:latest</Repository>
   <Registry>https://hub.docker.com/r/reckleschamp/asa-server</Registry>
   <Network>bridge</Network>
@@ -8,7 +8,7 @@
   <MyMAC/>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/Reckleschamp/game-servers</Support>
+  <Support>https://github.com/Reckleschamp/game-servers/</Support>
   <Project>https://hub.docker.com/r/reckleschamp/asa-server</Project>
   <Overview>&#13;
     ARK: Survival Ascended dedicated server.&#13;
@@ -27,13 +27,6 @@
   <Category>GameServers:</Category>
   <TemplateURL>https://raw.githubusercontent.com/Reckleschamp/unraid-templates/main/templates/asa.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/Reckleschamp/unraid-templates/main/images/asa.png</Icon>
-  <ExtraParams>--restart=unless-stopped</ExtraParams>
-  <PostArgs/>
-  <CPUset/>
-  <DateInstalled/>
-  <DonateText/>
-  <DonateLink/>
-  <Requires/>
   <Config Name="Server Data" Target="/data" Default="/mnt/user/appdata/asa-server" Mode="rw" Description="Private data for this map, the ASA installation, configuration, saves, logs, and Proton prefix. Every map container must use a different host directory." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/asa-server</Config>
   <Config Name="Shared Cluster Directory" Target="/cluster" Default="/mnt/user/appdata/asa-cluster" Mode="rw" Description="Shared player, item, and creature transfer data. Every map in the same cluster must use this exact same host directory." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/asa-cluster</Config>
   <Config Name="Session Name" Target="SESSION_NAME" Default="My ASA Server" Mode="" Description="Public server name displayed in the ARK server browser." Type="Variable" Display="always" Required="true" Mask="false"></Config>
